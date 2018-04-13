@@ -8,7 +8,7 @@ A simple Web Ui for Docker using `xterm.js`, `Node.js` and `Socket.io`
 docker run -it -d -p 3000:3000 -v /var/run/docker.sock:/var/run/docker.sock qfdk/easydockerweb
 ```
 
-[http://localhost:3000](http://localhost:3000) enjory ;)
+[http://localhost:3000](http://localhost:3000) enjoy ;)
 
 ## Requirement
 
@@ -42,3 +42,7 @@ docker run -p 3000:3000 -v /var/run/docker.sock:/var/run/docker.sock easy-docker
 ![containers](./images/containers.png)
 
 ![images](./images/images.png)
+
+![pull](./images/pull.png)
+
+![pull2](./images/pull2.png)

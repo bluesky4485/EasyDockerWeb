@@ -5,9 +5,16 @@ var docker = new Docker();
 /* GET home page. */
 router.get('/', function (req, res, next) {
   docker.info(function (err, info) {
-    res.render('overview', {
-      info: info
-    });
+    if (err) {
+      res.render('error', {
+        message: "Docker is running ?"
+      });
+    } else {
+      res.render('overview', {
+        info: info
+      });
+    }
+
   });
 });
 

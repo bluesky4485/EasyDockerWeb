@@ -37,7 +37,7 @@ var returnContainersRouter = function (io) {
 
   router.get('/remove/:id', function (req, res, next) {
     var container = docker.getContainer(req.params.id);
-    container.remove(function (err, data) {
+    container.remove({ force: true }, function (err, data) {
       res.redirect('/containers');
     });
   });
@@ -52,20 +52,30 @@ var returnContainersRouter = function (io) {
       Tty: false,
     }
 
+    // volume
     if (req.body.containerVolumeSource !== "" && req.body.containerVolumeDistination !== "") {
       var src = req.body.containerVolumeSource;
       var dis = req.body.containerVolumeDistination;
-      options.Volumes = {
-        dis: {}
-      };
+      options['Volumes'] = JSON.parse('{"' + dis + '": {}}');
       options.HostConfig = {
         'Binds': [src + ':' + dis]
       }
     }
 
+    // port
+    if (req.body.containerPortSource !== "" && req.body.containerPortDistination !== "") {
+      var src = req.body.containerPortSource + '/tcp';
+      var dis = req.body.containerPortDistination;
+      var tmp = '{ "' + src + '": [{ "HostPort": "' + dis + '" }]}';
+      options.HostConfig['PortBindings'] = JSON.parse(tmp);
+      options['ExposedPorts'] = JSON.parse('{"' + src + '": {}}');
+    }
+
     if (req.body.containerCmd) {
       options.Cmd = ['/bin/bash', '-c', req.body.containerCmd];
+      console.log(options)
       docker.createContainer(options, function (err, container) {
+        if (err) throw err
         container.start(function (err, data) {
           res.redirect('/containers/logs/' + container.id);
         });
@@ -151,7 +161,7 @@ var returnContainersRouter = function (io) {
       var container = docker.getContainer(id);
 
       var logStream = new stream.PassThrough();
-      logStream.on('data', function(chunk){
+      logStream.on('data', function (chunk) {
         socket.emit('show', chunk.toString('utf8'));
       });
 
@@ -164,11 +174,11 @@ var returnContainersRouter = function (io) {
       function handler(err, stream) {
         container.modem.demuxStream(stream, logStream, logStream);
         if (!err && stream) {
-        stream.on('end', function(){
-          logStream.end('===Logs stream finished===');
-          socket.emit('end', 'ended');
-          stream.destroy();
-        });
+          stream.on('end', function () {
+            logStream.end('===Logs stream finished===');
+            socket.emit('end', 'ended');
+            stream.destroy();
+          });
         }
       }
       container.logs(logs_opts, handler);
